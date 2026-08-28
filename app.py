@@ -8,11 +8,10 @@ from sklearn.metrics import accuracy_score
 
 st.set_page_config(
     page_title="Triagem de Veículo em Fim de Vida",
-    page_icon="🚗",
     layout="centered"
 )
 
-st.title("🚗 Triagem de Veículo em Fim de Vida")
+st.title("Triagem de Veículo em Fim de Vida")
 st.caption("Protótipo acadêmico — dados simulados, sem validade para decisão real.")
 
 st.info(
