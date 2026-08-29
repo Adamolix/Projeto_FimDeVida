@@ -168,7 +168,8 @@ if enviar:
         probabilidade = float(modelo_ml.predict_proba(entrada)[0][1])
         risco = classificar(probabilidade)
         pontos = calcular_pontos(idade, quilometragem, manutencoes_ano, custo_manutencao, valor_estimado, acidente_grave, falhas_frequentes, veiculo_parado)
-        registro = {
+        st.session_state["resultado_pronto"] = True
+        st.session_state["dados_resultado"] = {
             "nome": nome.strip(),
             "telefone": formatar_telefone(telefone),
             "email": email.strip(),
@@ -189,30 +190,85 @@ if enviar:
             "probabilidade_ia": round(probabilidade * 100, 2),
             "classificacao": risco,
         }
+
+        st.success("Análise concluída.")
+        st.subheader("Resultado da triagem")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Probabilidade estimada pela IA", f"{probabilidade * 100:.1f}%")
+        with col2:
+            st.metric("Sistema de pontuação", f"{pontos}/100")
+        st.write(f"**Classificação do modelo:** {risco}")
+        if risco in ("Alto", "Muito alto"):
+            st.warning("Recomendação do protótipo: encaminhar o veículo para uma avaliação técnica presencial.")
+        elif risco == "Moderado":
+            st.info("Recomendação do protótipo: acompanhar o veículo e considerar uma avaliação preventiva.")
+        else:
+            st.info("Recomendação do protótipo: nenhuma ação imediata indicada pela triagem.")
+        comparacao = pd.DataFrame({"Método": ["Sistema de pontos", "Machine Learning"], "Resultado": [pontos, round(probabilidade * 100, 1)]})
+        st.subheader("Comparação dos métodos")
+        st.bar_chart(comparacao.set_index("Método"))
+        st.caption(f"Acurácia obtida apenas no conjunto de teste SIMULADO: {acuracia_demo * 100:.1f}%. Não representa desempenho real.")
+
+# =========================================================
+# INTERESSE EM AVALIAÇÃO / PROGRAMA
+# =========================================================
+
+if st.session_state.get("resultado_pronto") and "dados_resultado" in st.session_state:
+    dados_resultado = st.session_state["dados_resultado"]
+    risco_resultado = dados_resultado["classificacao"]
+
+    if risco_resultado in ("Alto", "Muito alto"):
+        st.divider()
+        st.subheader("Próximos passos")
+
+        with st.form("form_interesse"):
+            interesse_avaliacao = st.radio(
+                "Você teria interesse em realizar uma avaliação técnica do veículo?",
+                ["Sim", "Talvez", "Não"],
+                horizontal=True
+            )
+
+            interesse_programa = st.radio(
+                "Caso o veículo seja considerado elegível, você teria interesse em participar de um programa de reutilização ou reciclagem?",
+                ["Sim", "Gostaria de saber mais", "Não"],
+                horizontal=True
+            )
+
+            confirmar_interesse = st.form_submit_button(
+                "Registrar interesse",
+                type="primary",
+                use_container_width=True
+            )
+
+        if confirmar_interesse:
+            registro_final = dict(dados_resultado)
+            registro_final["interesse_avaliacao"] = interesse_avaliacao
+            registro_final["interesse_programa"] = interesse_programa
+
+            try:
+                salvar_no_supabase(registro_final)
+                st.success("Cadastro e preferências registrados com sucesso.")
+                st.session_state["resultado_pronto"] = False
+                st.session_state.pop("dados_resultado", None)
+            except Exception as erro:
+                st.error("Não foi possível salvar o cadastro no Supabase.")
+                with st.expander("Detalhes técnicos"):
+                    st.code(str(erro))
+
+    else:
         try:
-            salvar_no_supabase(registro)
-            st.success("Veículo analisado e registrado com sucesso.")
-            st.subheader("Resultado da triagem")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Probabilidade estimada pela IA", f"{probabilidade * 100:.1f}%")
-            with col2:
-                st.metric("Sistema de pontuação", f"{pontos}/100")
-            st.write(f"**Classificação do modelo:** {risco}")
-            if risco in ("Alto", "Muito alto"):
-                st.warning("Recomendação do protótipo: encaminhar o veículo para uma avaliação técnica presencial.")
-            elif risco == "Moderado":
-                st.info("Recomendação do protótipo: acompanhar o veículo e considerar uma avaliação preventiva.")
-            else:
-                st.info("Recomendação do protótipo: nenhuma ação imediata indicada pela triagem.")
-            comparacao = pd.DataFrame({"Método": ["Sistema de pontos", "Machine Learning"], "Resultado": [pontos, round(probabilidade * 100, 1)]})
-            st.subheader("Comparação dos métodos")
-            st.bar_chart(comparacao.set_index("Método"))
-            st.caption(f"Acurácia obtida apenas no conjunto de teste SIMULADO: {acuracia_demo * 100:.1f}%. Não representa desempenho real.")
+            registro_final = dict(dados_resultado)
+            registro_final["interesse_avaliacao"] = None
+            registro_final["interesse_programa"] = None
+            salvar_no_supabase(registro_final)
+            st.session_state["resultado_pronto"] = False
+            st.session_state.pop("dados_resultado", None)
         except Exception as erro:
             st.error("Não foi possível salvar o cadastro no Supabase.")
             with st.expander("Detalhes técnicos"):
                 st.code(str(erro))
+
 
 st.divider()
 st.subheader("🔒 Área administrativa")
@@ -238,7 +294,7 @@ if senha_admin:
                 df_filtrado = df.copy()
                 if filtro_risco != "Todos":
                     df_filtrado = df_filtrado[df_filtrado["classificacao"] == filtro_risco]
-                colunas_tabela = ["created_at", "nome", "telefone", "email", "cidade", "modelo", "ano", "quilometragem", "pontos", "probabilidade_ia", "classificacao"]
+                colunas_tabela = ["created_at", "nome", "telefone", "email", "cidade", "modelo", "ano", "quilometragem", "pontos", "probabilidade_ia", "classificacao", "interesse_avaliacao", "interesse_programa"]
                 colunas_existentes = [c for c in colunas_tabela if c in df_filtrado.columns]
                 st.dataframe(df_filtrado[colunas_existentes], use_container_width=True, hide_index=True)
                 csv = df_filtrado.to_csv(index=False).encode("utf-8-sig")
