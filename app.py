@@ -7,6 +7,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from supabase import create_client, Client
 
+def formatar_telefone(numero):
+    numeros = "".join(filter(str.isdigit, numero))
+
+    if len(numeros) == 11:
+        return f"({numeros[:2]}) {numeros[2:7]}-{numeros[7:]}"
+    elif len(numeros) == 10:
+        return f"({numeros[:2]}) {numeros[2:6]}-{numeros[6:]}"
+
+    return numero
+
+
 st.set_page_config(page_title="Questionario FimDeVida", layout="centered")
 st.title("Demonstração do uso de Machine Learning para classificação de veículos quanto à probabilidade de fim de vida")
 st.caption("Protótipo acadêmico — modelo treinado com dados simulados.")
@@ -106,7 +117,10 @@ with st.form("formulario_veiculo", clear_on_submit=False):
     col1, col2 = st.columns(2)
     with col1:
         nome = st.text_input("Nome do proprietário *")
-        telefone = st.text_input("Telefone *")
+        telefone = st.text_input(
+            "Telefone *",
+            placeholder="(41) 99999-9999"
+        )
     with col2:
         email = st.text_input("E-mail *")
         cidade = st.text_input("Cidade / Estado")
@@ -137,6 +151,8 @@ if enviar:
         st.error("Preencha nome, telefone, e-mail e modelo do veículo.")
     elif not consentimento:
         st.error("É necessário marcar o consentimento para registrar os dados.")
+    elif len("".join(filter(str.isdigit, telefone))) not in [10, 11]:
+        st.error("Digite um telefone válido com DDD, contendo 10 ou 11 dígitos.")
     else:
         idade = max(0, ano_atual - int(ano_veiculo))
         entrada = pd.DataFrame([{
@@ -154,7 +170,7 @@ if enviar:
         pontos = calcular_pontos(idade, quilometragem, manutencoes_ano, custo_manutencao, valor_estimado, acidente_grave, falhas_frequentes, veiculo_parado)
         registro = {
             "nome": nome.strip(),
-            "telefone": telefone.strip(),
+            "telefone": formatar_telefone(telefone),
             "email": email.strip(),
             "cidade": cidade.strip(),
             "modelo": modelo_veiculo.strip(),
