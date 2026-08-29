@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 from supabase import create_client, Client
 
 st.set_page_config(page_title="Triagem de Veículo em Fim de Vida", page_icon="🚗", layout="centered")
-st.title("Triagem de Veículo em Fim de Vida")
+st.title("Demonstração do uso de Machine Learning para classificação de veículos quanto à probabilidade de fim de vida")
 st.caption("Protótipo acadêmico — modelo treinado com dados simulados.")
 st.info("Este sistema demonstra uma possível triagem de veículos próximos do fim de vida. O resultado não é diagnóstico mecânico nem avaliação oficial da Renault.")
 
