@@ -7,10 +7,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from supabase import create_client, Client
 
-st.set_page_config(page_title="Triagem de Veículo em Fim de Vida", page_icon="🚗", layout="centered")
+st.set_page_config(page_title="Questionario FimDeVida", layout="centered")
 st.title("Demonstração do uso de Machine Learning para classificação de veículos quanto à probabilidade de fim de vida")
 st.caption("Protótipo acadêmico — modelo treinado com dados simulados.")
-st.info("Este sistema demonstra uma possível triagem de veículos próximos do fim de vida. O resultado não é diagnóstico mecânico nem avaliação oficial da Renault.")
+st.info("Este sistema demonstra uma possível triagem para classifiação de veículos quanto a probabilidade de fim de vida.")
 
 @st.cache_resource
 def conectar_supabase() -> Client:
