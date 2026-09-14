@@ -21,7 +21,7 @@ def formatar_telefone(numero):
 st.set_page_config(page_title="Questionario SITRA", layout="centered")
 st.title("SITRA — Sistema Inteligente de Triagem e Reutilização Automotiva")
 st.caption("Demonstração do uso de Machine Learning para classificação de veículos quanto à probabilidade de fim de vida - Protótipo acadêmico — modelo treinado com dados simulados.")
-st.info("Este sistema demonstra uma possível triagem para classifiação de veículos quanto a probabilidade de fim de vida.")
+st.info("Este sistema demonstra uma possível triagem para classifiação de veículos quanto a probabilidade de fim de vida utilizando machine learing.")
 
 @st.cache_resource
 def conectar_supabase() -> Client:
